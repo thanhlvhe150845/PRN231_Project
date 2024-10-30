@@ -1,0 +1,101 @@
+﻿@page
+@model ManageRestaurantsClient.Pages.Admin.dashboardModel
+@{
+    ViewData["Title"] = "Dashboard";
+    bool isAuthenticated = Request.Cookies.ContainsKey("AuthToken");
+}       
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Statistics</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="btn-group mb-3" role="group" aria-label="Time Periods">
+            <button type="button" class="btn btn-primary" onclick="updateChart('today')">Today</button>
+            <button type="button" class="btn btn-secondary" onclick="updateChart('lastWeek')">Last Week</button>
+            <button type="button" class="btn btn-success" onclick="updateChart('lastMonth')">Last Month</button>
+        </div>
+
+        <div style="max-width: 400px; margin: 0 auto;">
+            <canvas id="myPieChart" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const ctx = document.getElementById('myPieChart').getContext('2d');
+
+            // Lấy dữ liệu từ backend và lưu vào localStorage
+            const data = {
+                today: {
+                    new: 1,
+                    pending: 3,
+                    cancelled: 2,
+                    completed: 10
+                },
+                lastWeek: {
+                    new: 4,
+                    pending: 0,
+                    cancelled: 1,
+                    completed: 3
+                },
+                lastMonth: {
+                    new: 4,
+                    pending: 3,
+                    cancelled: 1,
+                    completed: 3
+                }
+            };
+
+            // Save data to localStorage
+            localStorage.setItem('bookingStatistics', JSON.stringify(data));
+
+            // Retrieve data from localStorage
+            const storedData = JSON.parse(localStorage.getItem('bookingStatistics'));
+
+            const chartData = {
+                labels: ['New', 'Pending', 'Cancelled', 'Completed'],
+                datasets: [{
+                    data: [storedData.today.new, storedData.today.pending, storedData.today.cancelled, storedData.today.completed],
+                    backgroundColor: ['#36A2EB', '#FFCE56', '#FF6384', '#4BC0C0']
+                }]
+            };
+
+            const myPieChart = new Chart(ctx, {
+                type: 'pie',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (tooltipItem) {
+                                    const label = tooltipItem.label || '';
+                                    const value = tooltipItem.raw || 0;
+                                    return `${label}: ${value}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            window.updateChart = function (period) {
+                const updatedData = storedData[period];
+                myPieChart.data.datasets[0].data = [updatedData.new, updatedData.pending, updatedData.cancelled, updatedData.completed];
+                myPieChart.update();
+            }
+        });
+    </script>
+</body>
+</html>
+
+
